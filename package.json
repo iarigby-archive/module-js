@@ -1,0 +1,21 @@
+{
+  "name": "module-js",
+  "version": "1.0.0",
+  "description": "Javascript module for digital technologies subject",
+  "main": "lib/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "start": "node lib/index.js",
+    "notify": "node lib/notifications.js"
+  },
+  "dependencies": {
+    "@types/argparse": "^1.0.38",
+    "argparse": "^1.0.10",
+    "chai": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^13.9.8",
+    "typescript": "^3.8.3"
+  }
+}
