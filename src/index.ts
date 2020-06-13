@@ -23,11 +23,11 @@ async function main() {
     const results = []
     // ew ew ew
     // Promise.map iS nOt A fUnCtIoN
-    for (let i= 0; i < submissions.length; i++) {
+    for (let submission of submissions) {
         try {
-            results.push(await downloadAndTest(submissions[i], drive, i))
+            results.push(await downloadAndTest(submission, drive))
         } catch(e) {
-            logError(submissions[i], e)
+            logError(submission, e)
         }
     }
     const output = partitionResults(results, hw)
@@ -37,12 +37,12 @@ async function main() {
 }
 
 
-function downloadAndTest(submission: Submission, drive: Drive, index: number): Promise<Submission> {
+function downloadAndTest(submission: Submission, drive: Drive): Promise<Submission> {
     if (!run.forceCheck(submission) && !submission.qualifies()) {
         return new Promise(r => r(submission))
     }
     const id = submission.emailId
-    return downloadAtInterval(submission, drive, index)
+    return downloadAtInterval(submission, drive)
         .then((e: string) => log(e, `${id}: finished downloading`))
         .then(newPath => unzipSubmission(submission, newPath))
         .then((dir: string) => tester.testSubmission(dir))
