@@ -1,11 +1,15 @@
-import { setEnv, testerPath, config } from './config'
-const { hw, slice, download, runOpts } = setEnv()
-import { getSubmissions, Submission, Drive, saveFile, createDrive } from 'classroom-api'
-import {Result, testSubmission} from 'jskarel-tester'
-import { Run, log } from './runs'
-import { partitionResults } from './partitions'
+import {setEnv, testerPath, config} from './config'
+
+const {hw, slice, download, runOpts} = setEnv()
+import {getSubmissions, Submission, Drive, downloadZip, createDrive} from '../../classroom-api'
+import {Result, WebTester} from 'website-tester'
+import {Run, log} from './runs'
+import {partitionResults} from './partitions'
+import fs from 'fs'
+import unzipper from 'unzipper'
 
 const testPath = testerPath(hw.id)
+const tester = new WebTester(testPath)
 const run = new Run(hw, runOpts)
 
 async function main() {
@@ -15,11 +19,21 @@ async function main() {
         .then(submissions => submissions
             .filter(s => !hw.skip?.includes(s.emailId) && (run.forceCheck(s) || run.newSubmission(s))))
         .then(s => log(s, `downloading ${s.filter(e => e.onTime()).length}`))
-        .then(submissions => submissions.map((s, i) => downloadAndTest(s, drive, i)))
-    const results = await Promise.all(submissions)
+    //  .then(submissions => submissions.map((s, i) => downloadAndTest(s, drive, i)))
+    const results = []
+    // ew ew ew
+    // Promise.map iS nOt A fUnCtIoN
+    for (let i= 0; i < submissions.length; i++) {
+        try {
+            results.push(await downloadAndTest(submissions[i], drive, i))
+        } catch(e) {
+            logError(submissions[i], e)
+        }
+    }
     const output = partitionResults(results, hw)
 
     run.saveRunInfo(output)
+    tester.finish()
 }
 
 
@@ -29,29 +43,73 @@ function downloadAndTest(submission: Submission, drive: Drive, index: number): P
     }
     const id = submission.emailId
     return downloadAtInterval(submission, drive, index)
-         .then((e: string) => log(e, `${id}: finished downloading`))
-         .then((newPath: string) => testSubmission(testPath, newPath))
-         .then((r: Result[]) => log(r, `${id}: finished testing`))
-         .then((results: Result[]) => submission.addResults(results))
+        .then((e: string) => log(e, `${id}: finished downloading`))
+        .then(newPath => unzipSubmission(submission, newPath))
+        .then((dir: string) => tester.testSubmission(dir))
+        .catch(e => [zipError(e)])
+        .then((r: Result[]) => log(r, `${id}: finished testing`))
+        .then((results: Result[]) => submission.addResults(results))
+        .then(s => log(s, `${id}: ${submission.passed() ? 'passed' : 'failed'}`))
         .catch((error: any) => logError(submission, error))
 }
 
-function downloadAtInterval(submission: Submission, drive: Drive,  index: number): Promise<string> {
+function zipError(e: any): Result {
+    console.log(e)
+    return {
+        error: true,
+        message: 'დავალება არ არის zip ფაილში'
+    }
+}
+
+function unzipSubmission(submission: Submission, path: string): Promise<string> {
+    const dir = `${run.moveDir}/${submission.emailId}`
+    try {
+        fs.mkdirSync(dir)
+    } catch (w) {
+    }
+    return fs.createReadStream(path)
+        .pipe(unzipper.Extract({path: dir}))
+        .promise()
+        .then(() => findRootFile(dir))
+}
+
+function findRootFile(dir: string): string {
+    let p = dir
+    let files = fs.readdirSync(p)
+    let tries = 0
+    while (!files.includes('index.html')) {
+        if (tries > 3) {
+            throw "homework files not found"
+        }
+        try {
+            p = `${p}/${files[0]}`
+            files = fs.readdirSync(p)
+        } catch (e) {
+            throw "file with unsupported format: " + files[0]
+        }
+
+        tries++
+
+    }
+    return p
+}
+
+
+function downloadAtInterval(submission: Submission, drive: Drive): Promise<string> {
     const attachment = submission.attachment!
-    const fileName = attachment.title
+    const fileName = attachment.title.includes(submission.emailId) ? attachment.title : submission.emailId + '.download'
     const id = attachment.id
     const path = `${run.moveDir}/${fileName}`
     return new Promise((resolve) => {
-        setTimeout(() => {
+        // setTimeout(() => {
             if (download) {
                 console.log(`${submission.emailId}: downloading`)
-                saveFile(drive, id, path)
+                downloadZip(drive, id, path)
                     .then(() => resolve(path))
             } else {
                 resolve(path)
             }
-        }, (index) * 200)
-
+        // }, (index) * 200)
     })
 }
 
@@ -67,23 +125,3 @@ function logError(submission: Submission, error: any) {
 }
 
 main()
-
-// function downloadAtInterval(submission: Submission, index: number): Promise<string> {
-//     const fileName = submission.attachment!.title
-//     return new Promise((resolve) => {
-//         if (download) {
-//             setTimeout(() => {
-//                 console.log(`${submission.emailId}: downloading`)
-//                 resolve(downloadAssignment({
-//                     downloadDir: '/home/ia/Downloads',
-//                     downloadUrl: submission.attachment!.downloadUrl,
-//                     fileName: fileName,
-//                     moveDir: moveDir,
-//                     timeout: 500
-//                 }))
-//             }, (index) * 1000)
-//         } else {
-//             resolve(`${moveDir}/${fileName}`)
-//         }
-//     })
-// }

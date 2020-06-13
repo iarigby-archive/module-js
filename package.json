@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@types/argparse": "^1.0.38",
+    "@types/unzipper": "^0.10.3",
     "argparse": "^1.0.10",
-    "chai": "^4.2.0"
+    "chai": "^4.2.0",
+    "unzipper": "^0.10.11"
   },
   "devDependencies": {
     "@types/node": "^13.9.8",
