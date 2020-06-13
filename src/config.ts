@@ -94,7 +94,7 @@ export function setEnv(): EnvOptions {
 }
 
 export function testerPath(hwId: string) {
-    return path.resolve(__dirname, `../resources/${hwId}tester.js`)
+    return path.resolve(__dirname, `../resources/${hwId}tests.js`)
 }
 export interface HwConfig {
     id: string,
@@ -106,63 +106,12 @@ export interface HwConfig {
 }
 export const homeworks: HwConfig[] = [
     {
-        id: 'hw1',
-        name: 'დავალება 1',
+        id: 'hw9',
+        name: 'დავალება 9: ვებ აპლიკაცია',
         exceptions: {
             // late: ['gsamk19', 'aeris19', 'akuba19', 'ninchkh19', 'kpant19']
             // late: ['atutb19', 'edane19]
         },
-        // manualChecks: ['dtsom19', 'zkhut16']
-        manualChecks: ['ninchkh19', 'aeris19']
+        manualChecks: []
     },
-    {
-        id: 'hw2fillLine',
-        name: 'დავალება2 - fillLine',
-        skip: ['kpant19'],
-        manualChecks: ['rgoch19', 'lsats19', 'aatru19', 'apapi19'],
-        exceptions: {
-            // late: ['aerkv17']
-            // late: ['idoli19', 'atutb19', 'edane19']
-        }
-    },
-    {
-        id: 'hw2copyBeepers',
-        name: 'დავალება 2-copyBeepers',
-        skip: [],
-        manualChecks: ['aatru19', 'tkhat19'],
-        exceptions: {
-            // late: ['nukapa19']
-            // late: ['idoli19', 'atutb19', 'lzoi19']
-        }
-    },
-    {
-        id: 'bonus1',
-        name: 'ბონუსი 1',
-        skip: ['oiasa19'],
-        exceptions: {
-            // late: ['gbera19']
-        },
-        manualChecks: ['lsats19']
-    },
-    {
-        id: 'hw3',
-        name: 'დავალება 3',
-        exceptions: {
-            // late: ['edane19']
-        },
-        manualChecks: ['saonia19']
-    },
-    {
-        id: 'hw4',
-        name: 'დავალება 4'
-    },
-    {
-        id: 'bonus-middle',
-        name: 'ბონუსი-შუა წერტილი (3%)'
-    },
-    {
-        id: 'bonus-diagonal',
-        name: 'ბონუსი - დიაგონალები (3%)',
-        manualChecks: ['mkikn19', ]
-    }
 ];
