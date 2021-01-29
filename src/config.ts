@@ -94,7 +94,14 @@ export function setEnv(): EnvOptions {
 }
 
 export function testerPath(hwId: string) {
-    return path.resolve(__dirname, `../resources/${hwId}tests.js`)
+    // ვაიიმეეე
+    const result: any = {};
+    const testFiles = {'index': '', 'login': '_login', 'register': '_register'}
+    Object.keys(testFiles).forEach(file =>
+        // @ts-ignore
+        result[file] = path.resolve(__dirname, `../resources/${hwId}tests${testFiles[file]}.js`)
+    )
+    return result
 }
 export interface HwConfig {
     id: string,
@@ -114,4 +121,8 @@ export const homeworks: HwConfig[] = [
         },
         manualChecks: []
     },
+    {
+        id: 'final_project',
+        name: 'ფინალური პროექტი'
+    }
 ];

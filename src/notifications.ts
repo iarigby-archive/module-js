@@ -4,7 +4,7 @@ const { hw, runOpts } = setEnv()
 import { Partitions } from './partitions'
 import { Submission } from 'classroom-api'
 import { Run } from './runs'
-import { templates } from './templates'
+import { templates, tempTemplate } from './templates'
 const email = require('../../../results-manager/backend/services/email')
 
 const run = new Run(hw, runOpts)
@@ -12,7 +12,8 @@ const results = run.previousRunInfo
 function main() {
     const emails = Object.entries(results)
         .map(([type, submissions]: [string, Submission[]]) => {
-            const template = templates[type]
+//            const template = templates[type]
+            const template = tempTemplate
             if (runOpts.omit.includes(type)) {
                 return submissions.filter(s => hw.force?.includes(s.emailId))
                     .map(addToString)

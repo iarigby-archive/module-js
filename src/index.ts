@@ -23,7 +23,10 @@ async function main() {
     const results = []
     // ew ew ew
     // Promise.map iS nOt A fUnCtIoN
+    let i = 0
     for (let submission of submissions) {
+        i++
+        console.log(`submission ${i} of ${submissions.length}`)
         try {
             results.push(await downloadAndTest(submission, drive))
         } catch(e) {
@@ -45,19 +48,32 @@ function downloadAndTest(submission: Submission, drive: Drive): Promise<Submissi
     return downloadAtInterval(submission, drive)
         .then((e: string) => log(e, `${id}: finished downloading`))
         .then(newPath => unzipSubmission(submission, newPath))
-        .then((dir: string) => tester.testSubmission(dir))
+        .then((dir: string) => tester.testSubmission(dir, true, ['index', 'login', 'register']))
         .catch(e => [zipError(e)])
         .then((r: Result[]) => log(r, `${id}: finished testing`))
         .then((results: Result[]) => submission.addResults(results))
-        .then(s => log(s, `${id}: ${submission.passed() ? 'passed' : 'failed'}`))
+        .then(s => calculateScore(s))
+        .then(s => log(s, `${id}: ${submission.score}`))
         .catch((error: any) => logError(submission, error))
 }
 
+function getScore(r: Result): number {
+    // აუ ფუ
+    if (r.score) {
+        return r.passed ? r.score : 0
+    }
+    return 0
+}
+function calculateScore(s: Submission): Submission {
+    s.score = s.results.map(getScore).reduce((a, b) => a + b, 0)
+    return s
+}
 function zipError(e: any): Result {
     console.log(e)
+    console.log("error during unzip")
     return {
         error: true,
-        message: 'დავალება არ არის zip ფაილში'
+        message: 'დავალების ფაილები ვერ მოიძებნა. გაეცანით დაზიპვის ინსტრუქციებს. https://iarigby.github.io/freeuni-digital-technologies/info/browser_IDE'
     }
 }
 
@@ -74,6 +90,8 @@ function unzipSubmission(submission: Submission, path: string): Promise<string> 
 }
 
 function findRootFile(dir: string): string {
+    // noinspection SpellCheckingInspection
+    const miscdirs = ['__MACOSX', '.DS_STORE']
     let p = dir
     let files = fs.readdirSync(p)
     let tries = 0
@@ -81,11 +99,12 @@ function findRootFile(dir: string): string {
         if (tries > 3) {
             throw "homework files not found"
         }
+        const filtered = files.filter(e => !miscdirs.includes(e.toUpperCase()))
         try {
-            p = `${p}/${files[0]}`
+            p = `${p}/${filtered[0]}`
             files = fs.readdirSync(p)
         } catch (e) {
-            throw "file with unsupported format: " + files[0]
+            throw "file with unsupported format: " + filtered[0]
         }
 
         tries++
